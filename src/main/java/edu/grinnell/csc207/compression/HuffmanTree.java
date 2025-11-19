@@ -1,6 +1,9 @@
 package edu.grinnell.csc207.compression;
 
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Optional;
+
 
 /**
  * A HuffmanTree derives a space-efficient coding of a collection of byte
@@ -15,13 +18,49 @@ import java.util.Map;
  * our byte values.
  */
 public class HuffmanTree {
+    PriorityQueue<Node> priorityQueue;
+
+    private static final short EOF = 256;
+
+    public static class Node implements Comparable<Node> {
+        private Optional<Short> ch;
+        private int freq;
+        private Optional<Node> right;
+        private Optional<Node> left;
+
+        public Node(Optional<Short> ch, int freq, Optional<Node> right, Optional<Node> left) {
+            this.ch = ch;
+            this.freq = freq;
+            this.right = right;
+            this.left = left;
+        }
+
+        @Override
+        public int compareTo(Node other) {
+            return this.freq - other.freq;
+        }
+    }
 
     /**
      * Constructs a new HuffmanTree from a frequency map.
      * @param freqs a map from 9-bit values to frequencies.
      */
     public HuffmanTree (Map<Short, Integer> freqs) {
-        // TODO: fill me in!
+        priorityQueue = new PriorityQueue<>();
+        for (Map.Entry<Short, Integer> entry : freqs.entrySet()) {
+            Short key = entry.getKey();
+            int value = entry.getValue();
+            Node newNode = new Node(Optional.of(key), value, Optional.empty(), Optional.empty());
+            priorityQueue.add(newNode);
+        }
+        priorityQueue.add(new Node(Optional.of(EOF), 1, Optional.empty(), Optional.empty()));
+
+        while (priorityQueue.size() >= 2) {
+            Node left = priorityQueue.poll();
+            Node right = priorityQueue.poll();
+            Node interNode = new Node(Optional.empty(), left.freq + right.freq, Optional.of(left), Optional.of(right));
+            priorityQueue.add(interNode);
+        }
     }
 
     /**
