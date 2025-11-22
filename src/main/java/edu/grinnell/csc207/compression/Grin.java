@@ -47,19 +47,26 @@ public class Grin {
     public static void main(String[] args) throws IOException{
         // TODO: fill me in!
         //System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
+
         BitInputStream in = new BitInputStream("files/huffman-example.grin");
         BitOutputStream out = new BitOutputStream("files/output.grin");
 
-        Map<Short, Integer> freqMap = new HashMap<>();
-
-        freqMap.put((short) 0b01111010, 1);
-        freqMap.put((short) 0b100000000, 1);
-        freqMap.put((short) 0b00100000, 2);
-        freqMap.put((short) 0b01100010, 2);
-        freqMap.put((short) 0b01100001, 3);
-
-
-        HuffmanTree huffman = new HuffmanTree(freqMap);
+        int magicNumber = in.readBits(32);
+        System.out.println("The magic number is " + magicNumber);
+        HuffmanTree huffman = new HuffmanTree(in);
         huffman.decode(in, out);
+
+
+        // FREQUENCY MAP CONSTRUCTOR DEBUGGING
+        // Map<Short, Integer> freqMap = new HashMap<>();
+
+        // freqMap.put((short) 'a', 3);
+        // freqMap.put((short) ' ', 2);
+        // freqMap.put((short) 'b', 2);
+        // freqMap.put((short) 'z', 1);
+        // freqMap.put((short) 256, 1);
+
+        // HuffmanTree huffman = new HuffmanTree(freqMap);
+        
     }
 }

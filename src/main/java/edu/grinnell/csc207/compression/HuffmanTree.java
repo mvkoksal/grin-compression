@@ -111,13 +111,14 @@ public class HuffmanTree {
     }
 
     /**
-     * Constructs a new HuffmanTree from the given file.
+     * Reads the given HuffmanTree from the given file, and constructs it.
      * @param in the input file (as a BitInputStream)
      */
     public HuffmanTree (BitInputStream in) {
-        PriorityQueue<Node> priorityQueue = new PriorityQueue<>();
+        priorityQueue = new PriorityQueue<>();
         Node singleNode = InputStreamHelper(in);
         priorityQueue.add(singleNode);
+
         //DEBUGGING
         // System.out.println(singleNode.ch);
         //' '
@@ -170,23 +171,29 @@ public class HuffmanTree {
         // TODO: fill me in!
     }
 
-    public static void decodeHelper(BitInputStream in, BitOutputStream out, Node huffmanTree) {
+    public static int decodeHelper(BitInputStream in, BitOutputStream out, Node huffmanTree) {
         if (huffmanTree.isLeaf) {
             int ch = huffmanTree.ch;
             if (ch == EOF) {
                 System.out.println("EOF encountered!");
-                return;
+                return 0;
             }
+
             out.writeBits(ch, 9);
+            System.out.println("One character written!");
+            return 1;
+            
         } else {
             short oneBit = (short) in.readBit();
-
             if (oneBit == 0) {
-                decodeHelper(in, out, huffmanTree.left);
+                System.out.println("Going left");
+                return decodeHelper(in, out, huffmanTree.left);
             } else if (oneBit == 1){
-                decodeHelper(in, out, huffmanTree.right);
+                System.out.println("Going right");
+                return decodeHelper(in, out, huffmanTree.right);
             } else {
                 System.out.println("Something went wrong in decodeHelper");
+                return 0;
             }
         }     
     }
@@ -200,9 +207,14 @@ public class HuffmanTree {
      * @param out the file to write the decompressed output to.
      */
     public void decode (BitInputStream in, BitOutputStream out) {
-        int magicNumber = in.readBits(32);
-        System.out.println("The magic number is " + magicNumber);
-        Node huffman = priorityQueue.poll();
-        decodeHelper(in, out, huffman);
+        
+        Node huffmanNode = priorityQueue.poll();
+
+        while (true) {
+            int result = decodeHelper(in, out, huffmanNode);
+            if (result == 0) {
+                break;
+            }
+        }
     }
 }
