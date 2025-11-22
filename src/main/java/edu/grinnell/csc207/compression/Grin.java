@@ -1,5 +1,7 @@
 package edu.grinnell.csc207.compression;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -42,8 +44,22 @@ public class Grin {
      * The entry point to the program.
      * @param args the command-line arguments.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
         // TODO: fill me in!
-        System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
+        //System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
+        BitInputStream in = new BitInputStream("files/huffman-example.grin");
+        BitOutputStream out = new BitOutputStream("files/output.grin");
+
+        Map<Short, Integer> freqMap = new HashMap<>();
+
+        freqMap.put((short) 0b01111010, 1);
+        freqMap.put((short) 0b100000000, 1);
+        freqMap.put((short) 0b00100000, 2);
+        freqMap.put((short) 0b01100010, 2);
+        freqMap.put((short) 0b01100001, 3);
+
+
+        HuffmanTree huffman = new HuffmanTree(freqMap);
+        huffman.decode(in, out);
     }
 }
