@@ -15,10 +15,12 @@ import java.util.PriorityQueue;
  * Instead, we use the next larger primitive integral type, short, to store
  * our byte values.
  */
+
 public class HuffmanTree {
     PriorityQueue<Node> priorityQueue;
 
     private static final short EOF = 256;
+    private static final int MAGICNUM = 1846;
 
     public static class Node implements Comparable<Node> {
         private short ch;
@@ -87,14 +89,7 @@ public class HuffmanTree {
         }
     }
 
-// The relevant constructor and methods of the BitInputStream class are:
-
-// BitInputStream(String filename): constructs a new BitInputStream pointed at the given file.
-// int readBit(): reads a single bit of data from the stream, returning -1 if the stream is empty.
-// int readBits(int n): reads in n bits of data (from 0 to 32 bits), returning -1 if the stream runs out of bits in the process.
-// Note that the return types of readBit and readBits are integers even though an integer is much larger than a single bit or byte (8 bits). In particular, you should immediately cast the result of readBits to a primitive of the appropriate size.
-
-
+    // helper of the method below it
     public static Node InputStreamHelper (BitInputStream in) {
         short oneBit = (short) in.readBit();
         if (oneBit == 0) {
@@ -137,7 +132,6 @@ public class HuffmanTree {
     }
 
     public static void OutputStreamHelper (BitOutputStream out, Node HuffmanTree) {
-        
         if (HuffmanTree.isLeaf) {
             // Write 0 and the bits of the character
             out.writeBit(0);
@@ -155,11 +149,36 @@ public class HuffmanTree {
      * @param out the output file as a BitOutputStream
      */
     public void serialize (BitOutputStream out) {
-        Node HuffmanTree = priorityQueue.poll();
+        Node HuffmanTree = priorityQueue.peek();
         OutputStreamHelper(out, HuffmanTree);
 
     }
    
+
+    public static boolean encodeSearchHelper(BitInputStream in, BitOutputStream out, Node node, String bitPath, int ch, char dir) {
+        // do i need to check if right or left is null? how do we know this is a balanced tree?
+        if (dir != '2') {
+            bitPath += dir;
+        }
+        if (node.isLeaf) {
+            System.out.println("Going into leafNode...");
+            if (ch == node.ch) {
+                System.out.println("Found the letter!");
+                System.out.println("The bitPath is " + bitPath);
+                System.out.println("The found letter is " + node.ch);
+                int mybitPath = Integer.parseInt(bitPath, 2);
+                out.writeBits(mybitPath, bitPath.length());
+                out.writeBits(node.ch, 9);
+                return true;
+            }
+        } else {
+            System.out.println("Not leaf node, searching branches...");
+            encodeSearchHelper(in, out, node.left, bitPath, ch, '0');
+            encodeSearchHelper(in, out, node.right, bitPath, ch, '1');
+        }
+        return false;
+    }
+    
     /**
      * Encodes the file given as a stream of bits into a compressed format
      * using this Huffman tree. The encoded values are written, bit-by-bit
@@ -168,9 +187,28 @@ public class HuffmanTree {
      * @param out the file to write the compressed output to.
      */
     public void encode (BitInputStream in, BitOutputStream out) {
-        // TODO: fill me in!
+        // out.writeBits(MAGICNUM, 32);
+        // serialize(out);
+        Node huffmanTree = priorityQueue.peek();
+        String bitPath = "";
+
+        // read one char from the input file
+        while (in.hasBits()) {
+            int ch = in.readBits(8);
+            if (encodeSearchHelper(in, out, huffmanTree, bitPath, ch, '2')) {
+            System.out.println("Encoded one letter.");
+            } else {
+                System.out.println("For some reason ch is not in the HuffManTree");
+            }
+        }
+        System.out.println(huffmanTree.left.right.right.ch);
+        System.out.println(huffmanTree.left.right.left.ch);
+        System.out.println("Completed reading file");
     }
 
+
+    // Takes a huffmanTree and compressed bits, finds the leaf that corresponds to the given code.
+    // ex. 0110 <9 bits of a char> --> goes left right right left, and then reads the next 9 bits which are the char.
     public static int decodeHelper(BitInputStream in, BitOutputStream out, Node huffmanTree) {
         if (huffmanTree.isLeaf) {
             int ch = huffmanTree.ch;
@@ -178,7 +216,6 @@ public class HuffmanTree {
                 System.out.println("EOF encountered!");
                 return 0;
             }
-
             out.writeBits(ch, 9);
             System.out.println("One character written!");
             return 1;
@@ -207,9 +244,7 @@ public class HuffmanTree {
      * @param out the file to write the decompressed output to.
      */
     public void decode (BitInputStream in, BitOutputStream out) {
-        
-        Node huffmanNode = priorityQueue.poll();
-
+        Node huffmanNode = priorityQueue.peek();
         while (true) {
             int result = decodeHelper(in, out, huffmanNode);
             if (result == 0) {

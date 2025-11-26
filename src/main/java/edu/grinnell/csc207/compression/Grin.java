@@ -48,25 +48,34 @@ public class Grin {
         // TODO: fill me in!
         //System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
 
-        BitInputStream in = new BitInputStream("files/huffman-example.grin");
-        BitOutputStream out = new BitOutputStream("files/output.grin");
+        // DECODE CODE
+        // BitInputStream in = new BitInputStream("files/huffman-example.grin");
+        // BitOutputStream out = new BitOutputStream("files/output.grin");
 
-        int magicNumber = in.readBits(32);
-        System.out.println("The magic number is " + magicNumber);
-        HuffmanTree huffman = new HuffmanTree(in);
-        huffman.decode(in, out);
+        // int magicNumber = in.readBits(32);
+        // System.out.println("The magic number is " + magicNumber);
+        // HuffmanTree huffman = new HuffmanTree(in);
+        // huffman.decode(in, out);
+
+        // ENCODE CODE
+        BitInputStream in = new BitInputStream("files/huffman-example.txt");
+        BitOutputStream out = new BitOutputStream("files/outputcompr.grin");
+
+        Map<Short, Integer> freqMap = new HashMap<>();
+        freqMap.put((short) 'a', 3);
+        freqMap.put((short) ' ', 2);
+        freqMap.put((short) 'b', 2);
+        freqMap.put((short) 'z', 1);
+
+        HuffmanTree huffman = new HuffmanTree(freqMap);
+        huffman.encode(in, out);
 
 
-        // FREQUENCY MAP CONSTRUCTOR DEBUGGING
-        // Map<Short, Integer> freqMap = new HashMap<>();
 
-        // freqMap.put((short) 'a', 3);
-        // freqMap.put((short) ' ', 2);
-        // freqMap.put((short) 'b', 2);
-        // freqMap.put((short) 'z', 1);
-        // freqMap.put((short) 256, 1);
-
-        // HuffmanTree huffman = new HuffmanTree(freqMap);
+        // Closes streams
+        in.close();
+        out.close();
+        
         
     }
 }
