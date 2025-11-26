@@ -70,12 +70,19 @@ public class Grin {
         HuffmanTree huffman = new HuffmanTree(freqMap);
         huffman.encode(in, out);
 
-
-
         // Closes streams
         in.close();
         out.close();
-        
+
+        BitInputStream in2 = new BitInputStream("files/outputcompr.grin");
+        BitOutputStream out2 = new BitOutputStream("files/output.grin");
+
+        int magicNumber = in2.readBits(32);
+        System.out.println("The magic number is " + magicNumber);
+        HuffmanTree huffman2 = new HuffmanTree(in2);
+        huffman2.decode(in2, out2);
+        in2.close();
+        out2.close();
         
     }
 }

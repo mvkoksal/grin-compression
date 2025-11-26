@@ -155,26 +155,25 @@ public class HuffmanTree {
     }
    
 
-    public static boolean encodeSearchHelper(BitInputStream in, BitOutputStream out, Node node, String bitPath, int ch, char dir) {
+    public static boolean encodeSearchHelper(BitOutputStream out, Node node, String bitPath, int ch, char dir) {
         // do i need to check if right or left is null? how do we know this is a balanced tree?
         if (dir != '2') {
             bitPath += dir;
         }
         if (node.isLeaf) {
-            System.out.println("Going into leafNode...");
+            // System.out.println("Going into leafNode...");
             if (ch == node.ch) {
                 System.out.println("Found the letter!");
                 System.out.println("The bitPath is " + bitPath);
                 System.out.println("The found letter is " + node.ch);
                 int mybitPath = Integer.parseInt(bitPath, 2);
                 out.writeBits(mybitPath, bitPath.length());
-                out.writeBits(node.ch, 9);
                 return true;
             }
         } else {
-            System.out.println("Not leaf node, searching branches...");
-            encodeSearchHelper(in, out, node.left, bitPath, ch, '0');
-            encodeSearchHelper(in, out, node.right, bitPath, ch, '1');
+            // System.out.println("Not leaf node, searching branches...");
+            encodeSearchHelper(out, node.left, bitPath, ch, '0');
+            encodeSearchHelper(out, node.right, bitPath, ch, '1');
         }
         return false;
     }
@@ -187,22 +186,21 @@ public class HuffmanTree {
      * @param out the file to write the compressed output to.
      */
     public void encode (BitInputStream in, BitOutputStream out) {
-        // out.writeBits(MAGICNUM, 32);
-        // serialize(out);
+        out.writeBits(MAGICNUM, 32);
+        serialize(out);
+
         Node huffmanTree = priorityQueue.peek();
         String bitPath = "";
 
-        // read one char from the input file
         while (in.hasBits()) {
+            // read one char from the input file
             int ch = in.readBits(8);
-            if (encodeSearchHelper(in, out, huffmanTree, bitPath, ch, '2')) {
-            System.out.println("Encoded one letter.");
-            } else {
-                System.out.println("For some reason ch is not in the HuffManTree");
-            }
+                System.out.println("Read ch: " + ch);
+            encodeSearchHelper(out, huffmanTree, bitPath, ch, '2');
         }
-        System.out.println(huffmanTree.left.right.right.ch);
-        System.out.println(huffmanTree.left.right.left.ch);
+        // add EOF
+        encodeSearchHelper(out, huffmanTree, bitPath, EOF, '2');
+
         System.out.println("Completed reading file");
     }
 
@@ -216,8 +214,8 @@ public class HuffmanTree {
                 System.out.println("EOF encountered!");
                 return 0;
             }
-            out.writeBits(ch, 9);
-            System.out.println("One character written!");
+            out.writeBits(ch, 8);
+            System.out.println("One character written!" + ch);
             return 1;
             
         } else {
