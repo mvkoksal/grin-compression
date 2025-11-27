@@ -1,13 +1,13 @@
 # Project: Grin Compression
 
-Authors: (_TODO: fill in names here!_)
+Authors: Meryem Koksal
 
 ## Resources
 
-*   (_TODO: fill in resources here!_)
-*   ...
+*   The project description: https://osera.cs.grinnell.edu/ttap/data-structures-labs/grin-compression.html
+*   The Loot Generator project code
 *   ...
 
 ## Revision Log
 
-*   (_TODO: fill in your changes to your project here!_)
+*  
