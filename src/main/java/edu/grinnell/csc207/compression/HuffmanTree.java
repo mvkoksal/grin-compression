@@ -48,7 +48,7 @@ public class HuffmanTree {
             this.isLeaf = false;
         }
 
-        // Constructors for serializing HuffmanTrees (recreating an existing HuffmanTree from a file)
+        // Constructors for serializing HuffmanTrees (decoding a serialized HuffmanTree from a file)
         public Node(short ch) {
             this.ch = ch;
             this.isLeaf = true;
@@ -60,6 +60,7 @@ public class HuffmanTree {
             this.isLeaf = false;
         }
 
+        // For a min priority queue
         @Override
         public int compareTo(Node other) {
             return this.freq - other.freq;
@@ -72,6 +73,7 @@ public class HuffmanTree {
      */
     public HuffmanTree (Map<Short, Integer> freqs) {
         priorityQueue = new PriorityQueue<>();
+        // Create a node of each pair of the frequency map, and add them to the queue
         for (Map.Entry<Short, Integer> entry : freqs.entrySet()) {
             Short key = entry.getKey();
             int value = entry.getValue();
@@ -81,6 +83,9 @@ public class HuffmanTree {
         // add the end of file character
         priorityQueue.add(new Node(EOF, 1));
 
+        // Build the HuffmanTree from left to right
+        // Combine two nodes (removing them from the queue) and re-add the combined node to the queue
+        // Loop until one node is left in the queue, which is the HuffmanTree
         while (priorityQueue.size() >= 2) {
             Node left = priorityQueue.poll();
             Node right = priorityQueue.poll();
@@ -93,15 +98,22 @@ public class HuffmanTree {
         }
     }
 
-    // helper of the method below it
+    /**
+     * Recursively re-constructs a serialized HuffmanTree from a file
+     * The serialized HuffmanTree has two type of nodes:
+     * Leaf: 0 + 9 bits of a char
+     * InterNode: 1
+     * @param in the input stream
+     * @return the constructed Huffman Tree
+     */
     public static Node InputStreamHelper (BitInputStream in) {
         short oneBit = (short) in.readBit();
-        if (oneBit == 0) {
+        if (oneBit == 0) { // Leaf
             short nineBits = (short) in.readBits(9);
             Node newNode = new Node(nineBits);
-            System.out.println("One new leaf!");
+            System.out.println("One new leaf!"); //debugging
             return newNode;
-        } else {
+        } else { // Node
             Node left = InputStreamHelper(in);
             Node right = InputStreamHelper(in);
             Node newNode = new Node(left, right);
@@ -135,6 +147,13 @@ public class HuffmanTree {
 
     }
 
+    /**
+     * Recursively serializes a HuffmanTree and writes it into a file
+     * For a leaf: writes 0 + 9 bits of the char
+     * For a node: writes 1
+     * @param out the OutputStream
+     * @param HuffmanTree the given HuffmanTree
+     */
     public static void OutputStreamHelper (BitOutputStream out, Node HuffmanTree) {
         if (HuffmanTree.isLeaf) {
             // Write 0 and the bits of the character
@@ -158,28 +177,41 @@ public class HuffmanTree {
 
     }
    
-
-    public static boolean encodeSearchHelper(BitOutputStream out, Node node, String bitPath, int ch, char dir) {
+    /**
+     * Recursively searches a compressed HuffmanTree for the path of the given character
+     * Writes the path into a file when the character is found
+     * @param out the OutputStream
+     * @param node the HuffmanTree
+     * @param bitPath the path to the character, a string of 1s and 0s, keeps track of the moves made
+     * @param ch the searched for character
+     * @param dir '0' if turned left, '1' if turned right, 
+     * written into bitPath to indicate direction 
+     * @return true if a path is found
+     */
+    public static void encodeSearchHelper(BitOutputStream out, Node node, String bitPath, int ch, char dir) {
         // do i need to check if right or left is null? how do we know this is a balanced tree?
         if (dir != BITPATHBEG) {
             bitPath += dir;
         }
         if (node.isLeaf) {
-            // System.out.println("Going into leafNode...");
+            // System.out.println("Going into leafNode..."); // debugging
             if (ch == node.ch) {
+                // debugging
                 System.out.println("Found the letter!");
                 System.out.println("The bitPath is " + bitPath);
                 System.out.println("The found letter is " + node.ch);
+
+                // Cast the bitPath consisting of 0s and 1s from a string to bits
                 int mybitPath = Integer.parseInt(bitPath, 2);
+
                 out.writeBits(mybitPath, bitPath.length());
-                return true;
             }
         } else {
-            // System.out.println("Not leaf node, searching branches...");
+            // System.out.println("Not leaf node, searching branches..."); // debugging
+            // Recursively search the left and the right nodes
             encodeSearchHelper(out, node.left, bitPath, ch, LEFT);
             encodeSearchHelper(out, node.right, bitPath, ch, RIGHT);
         }
-        return false;
     }
     
     /**
@@ -197,41 +229,51 @@ public class HuffmanTree {
         String bitPath = "";
 
         while (in.hasBits()) {
-            // read one char from the input file
+            // Read one char from the input file
             int ch = in.readBits(8);
-                System.out.println("Read ch: " + ch);
+            System.out.println("Read ch: " + ch); //debugging
             encodeSearchHelper(out, huffmanTree, bitPath, ch, BITPATHBEG);
         }
-        // add EOF
+        // add the EOF character at the end
         encodeSearchHelper(out, huffmanTree, bitPath, EOF, BITPATHBEG);
 
-        System.out.println("Completed reading file");
+        System.out.println("Completed reading file"); // debugging
     }
 
 
-    // Takes a huffmanTree and compressed bits, finds the leaf that corresponds to the given code.
     // ex. 0110 <9 bits of a char> --> goes left right right left, and then reads the next 9 bits which are the char.
+
+    /**
+     * 
+     * Reads a bitPath from an infile bit by bit, follows the path and writes the character found to the outfile
+     * @param in the InputStream with the compressed HuffmanTree to be used as the key
+     * @param out the OutputStream
+     * @param huffmanTree to be used for decoding
+     * @return the decoded character
+     */
     public static int decodeHelper(BitInputStream in, BitOutputStream out, Node huffmanTree) {
         if (huffmanTree.isLeaf) {
             int ch = huffmanTree.ch;
             if (ch == EOF) {
-                System.out.println("EOF encountered!");
+                // End of file
+                System.out.println("EOF encountered!"); // debugging
                 return 0;
             }
             out.writeBits(ch, 8);
-            System.out.println("One character written!" + ch);
+            System.out.println("One character written!" + ch); // debugging
             return 1;
             
         } else {
+            // Read one bit of the bitPath
             short oneBit = (short) in.readBit();
             if (oneBit == 0) {
-                System.out.println("Going left");
+                System.out.println("Going left"); // debugging
                 return decodeHelper(in, out, huffmanTree.left);
             } else if (oneBit == 1){
-                System.out.println("Going right");
+                System.out.println("Going right"); // debugging
                 return decodeHelper(in, out, huffmanTree.right);
             } else {
-                System.out.println("Something went wrong in decodeHelper");
+                System.out.println("Something went wrong in decodeHelper"); // debugging
                 return 0;
             }
         }     
@@ -248,6 +290,7 @@ public class HuffmanTree {
     public void decode (BitInputStream in, BitOutputStream out) {
         Node huffmanNode = priorityQueue.peek();
         while (true) {
+            // Loop until all bitPaths in the inputStream are exhausted
             int result = decodeHelper(in, out, huffmanNode);
             if (result == 0) {
                 break;

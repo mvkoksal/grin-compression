@@ -23,11 +23,15 @@ public class Grin {
     public static void decode (String infile, String outfile) throws IOException {
         BitInputStream in = new BitInputStream(infile);
         BitOutputStream out = new BitOutputStream(outfile);
+
+        // Read the .grin magic number
         int magicNumber = in.readBits(MAGICNUMBITLENGTH);
         if (magicNumber != MAGICNUM) {
             System.out.println("Infile is not a valid .grin file");
            throw new IllegalArgumentException(); 
         }
+
+        // Re-build the serialized HuffmanTree from the infile
         HuffmanTree huffmanTree = new HuffmanTree(in);
         huffmanTree.decode(in, out);
         
@@ -47,7 +51,7 @@ public class Grin {
         Map<Short, Integer> freqMap = new HashMap<>();
         while (in.hasBits()) {
            short ch = (short) in.readBits(8);
-                // if containsKey, then just increase it, if not, add a new pair.
+                // if already in the map, increase the frequency by one, if not, add a new pair
             if(freqMap.containsKey(ch)) {
                 freqMap.put(ch, freqMap.get(ch) + 1);
             } else {
@@ -68,6 +72,7 @@ public class Grin {
         BitInputStream in = new BitInputStream(infile);
         BitOutputStream out = new BitOutputStream(outfile);
 
+        // Create a huffmanTree from a frequency map
         Map<Short, Integer> freqMap = createFrequencyMap(infile);
         HuffmanTree huffmanTree = new HuffmanTree(freqMap);
         huffmanTree.encode(in, out);
@@ -79,31 +84,35 @@ public class Grin {
 
     /**
      * The entry point to the program.
+     * Exit if given invalid or incorrect number of arguments
      * @param args the command-line arguments.
      */
     public static void main(String[] args) throws IOException{
 
-        // if (args.length != 3) {
-        //     System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
-        //     System.exit(0);
-        // }
+        // Check number of inputs
+        if (args.length != 3) {
+            System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
+            System.exit(0);
+        }
 
+        // Read input
         String command = args[0];
         String infile = args[1];
         String outfile = args[2];
 
+        // Validate command
         if (!command.equals("encode") && !command.equals("decode")) {
             System.out.println("Usage: java Grin <encode|decode> <infile> <outfile>");
             System.exit(0);
         }
 
+        // Process command
         if (command.equals("decode")) {
             decode(infile, outfile);
         } else if (command.equals("encode")) {
             encode(infile, outfile);
         }
 
-        
         // FREQUENCY MAP DEBUGGING
         // Map<Short, Integer> freqMap = createFrequencyMap(infile);
 
