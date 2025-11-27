@@ -21,6 +21,10 @@ public class HuffmanTree {
 
     private static final short EOF = 256;
     private static final int MAGICNUM = 1846;
+    private static final int MAGICNUMBITLENGTH = 32;
+    private static final char BITPATHBEG = '2';
+    private static final char LEFT = '0';
+    private static final char RIGHT = '1';
 
     public static class Node implements Comparable<Node> {
         private short ch;
@@ -157,7 +161,7 @@ public class HuffmanTree {
 
     public static boolean encodeSearchHelper(BitOutputStream out, Node node, String bitPath, int ch, char dir) {
         // do i need to check if right or left is null? how do we know this is a balanced tree?
-        if (dir != '2') {
+        if (dir != BITPATHBEG) {
             bitPath += dir;
         }
         if (node.isLeaf) {
@@ -172,8 +176,8 @@ public class HuffmanTree {
             }
         } else {
             // System.out.println("Not leaf node, searching branches...");
-            encodeSearchHelper(out, node.left, bitPath, ch, '0');
-            encodeSearchHelper(out, node.right, bitPath, ch, '1');
+            encodeSearchHelper(out, node.left, bitPath, ch, LEFT);
+            encodeSearchHelper(out, node.right, bitPath, ch, RIGHT);
         }
         return false;
     }
@@ -186,7 +190,7 @@ public class HuffmanTree {
      * @param out the file to write the compressed output to.
      */
     public void encode (BitInputStream in, BitOutputStream out) {
-        out.writeBits(MAGICNUM, 32);
+        out.writeBits(MAGICNUM, MAGICNUMBITLENGTH);
         serialize(out);
 
         Node huffmanTree = priorityQueue.peek();
@@ -196,10 +200,10 @@ public class HuffmanTree {
             // read one char from the input file
             int ch = in.readBits(8);
                 System.out.println("Read ch: " + ch);
-            encodeSearchHelper(out, huffmanTree, bitPath, ch, '2');
+            encodeSearchHelper(out, huffmanTree, bitPath, ch, BITPATHBEG);
         }
         // add EOF
-        encodeSearchHelper(out, huffmanTree, bitPath, EOF, '2');
+        encodeSearchHelper(out, huffmanTree, bitPath, EOF, BITPATHBEG);
 
         System.out.println("Completed reading file");
     }
